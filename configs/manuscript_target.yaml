@@ -1,0 +1,40 @@
+version: 1
+purpose: manuscript target-stack adaptation and inference
+model:
+  architecture: resunet
+  feature_mode: stack_relief
+adaptation:
+  study_specific_slice_indices: [46, 47, 60, 70, 86]
+  seeds: [142, 242, 342]
+  epochs: 160
+  train_mode: patch
+  patch_size: 384
+  patches_per_image: 24
+  positive_patch_ratio: 0.75
+  minimum_positive_fraction: 0.005
+  batch_size: 1
+  optimizer: Adam
+  learning_rate: 0.0001
+  weight_decay: 0.00001
+  augmentation: optimization_geometric_intensity
+loss:
+  bce_weight: 0.10
+  dice_weight: 0.65
+  tversky_weight: 0.25
+  tversky_alpha: 0.35
+  tversky_beta: 0.65
+inference:
+  tile_size: 384
+  overlap: 96
+  ensemble: arithmetic mean of three float32 probability maps
+  probability_threshold: 0.60
+  test_time_augmentation: false
+  connected_component_filtering: false
+  hole_filling: false
+  morphological_smoothing: false
+  manual_correction: false
+historical_descriptive_evaluation:
+  study_specific_slice_indices: [0, 48, 49, 50, 136]
+mask:
+  manual_pore_convention: pixel value equal to 0
+  predicted_pore_convention: pixel value greater than 0

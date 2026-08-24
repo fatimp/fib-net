@@ -1,0 +1,79 @@
+import numpy as np
+
+from fibnet.inference import (
+    _axis_positions,
+    _tile_weight,
+    accumulate_weighted_tile,
+    normalize_weighted_probability,
+)
+
+HEIGHT = 963
+WIDTH = 2022
+TILE_SIZE = 384
+OVERLAP = 96
+
+
+def reconstruct(field: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    stride = TILE_SIZE - OVERLAP
+    xs = _axis_positions(WIDTH, TILE_SIZE, stride)
+    ys = _axis_positions(HEIGHT, TILE_SIZE, stride)
+    tile_weight = _tile_weight(TILE_SIZE)
+    probability_sum = np.zeros_like(field, dtype=np.float32)
+    weight_sum = np.zeros_like(field, dtype=np.float32)
+
+    for y in ys:
+        for x in xs:
+            crop_height = min(TILE_SIZE, HEIGHT - y)
+            crop_width = min(TILE_SIZE, WIDTH - x)
+            probability = field[y : y + crop_height, x : x + crop_width]
+            weight = tile_weight[:crop_height, :crop_width]
+            accumulate_weighted_tile(
+                probability_sum, weight_sum, probability, weight, y, x
+            )
+
+    return normalize_weighted_probability(probability_sum, weight_sum), weight_sum
+
+
+def test_constant_probability_is_preserved_for_realistic_geometry() -> None:
+    field = np.full((HEIGHT, WIDTH), 0.7, dtype=np.float32)
+
+    reconstructed, weight_sum = reconstruct(field)
+
+    assert np.all(weight_sum > 0.0)
+    np.testing.assert_allclose(reconstructed, field, rtol=1e-6, atol=1e-6)
+
+
+def test_spatial_field_is_preserved_at_borders_overlaps_and_low_weights() -> None:
+    y = np.linspace(0.0, 1.0, HEIGHT, dtype=np.float32)[:, None]
+    x = np.linspace(0.0, 1.0, WIDTH, dtype=np.float32)[None, :]
+    field = (0.1 + 0.35 * x + 0.45 * y + 0.05 * x * y).astype(np.float32)
+
+    reconstructed, weight_sum = reconstruct(field)
+
+    stride = TILE_SIZE - OVERLAP
+    sample_points = np.array(
+        [
+            (0, 0),
+            (0, WIDTH - 1),
+            (HEIGHT - 1, 0),
+            (HEIGHT - 1, WIDTH - 1),
+            (HEIGHT // 2, WIDTH // 2),
+            (stride, stride),
+            (TILE_SIZE - 1, TILE_SIZE - 1),
+        ]
+    )
+    assert np.any(weight_sum < 1.0)
+    np.testing.assert_allclose(reconstructed, field, rtol=1e-6, atol=1e-6)
+    np.testing.assert_allclose(
+        reconstructed[sample_points[:, 0], sample_points[:, 1]],
+        field[sample_points[:, 0], sample_points[:, 1]],
+        rtol=1e-6,
+        atol=1e-6,
+    )
+
+
+def test_axis_positions_rejects_uncovered_gaps() -> None:
+    positions = _axis_positions(100, 32, 24)
+
+    assert positions[0] == 0
+    assert positions[-1] == 68

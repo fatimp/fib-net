@@ -1,0 +1,10 @@
+cff-version: 1.2.0
+message: "If you use FIB-NET, please cite this software."
+title: FIB-NET
+type: software
+version: 0.1.0
+authors:
+  - family-names: Tolstygin
+    given-names: K.
+repository-code: "https://github.com/IsNeron/fib-net"
+license: MIT

@@ -1,0 +1,65 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "fib-net"
+version = "0.1.0"
+description = "Annotation-efficient pore segmentation for serial soil FIB-SEM images"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+authors = [{ name = "K. Tolstygin" }]
+keywords = ["FIB-SEM", "segmentation", "soil", "porosity", "PyTorch"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Image Processing",
+]
+dependencies = [
+    "numpy>=2.0,<3",
+    "pillow>=11,<13",
+    "torch>=2.6,<2.7",
+    "tqdm>=4.67,<5",
+]
+
+[project.urls]
+Repository = "https://github.com/IsNeron/fib-net"
+Issues = "https://github.com/IsNeron/fib-net/issues"
+
+[project.scripts]
+fibnet-train = "fibnet.training:main"
+fibnet-infer = "fibnet.inference:main"
+fibnet-postprocess = "fibnet.postprocessing:main"
+fibnet-evaluate = "fibnet.evaluation:main"
+fibnet-correlations = "fibnet.correlations:main"
+fibnet-ensemble = "fibnet.ensemble:main"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3,<10",
+    "pyyaml>=6.0,<7",
+    "ruff>=0.15,<0.16",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["fibnet"]
+
+[tool.pytest.ini_options]
+addopts = "-ra"
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py310"
+extend-exclude = ["paper"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+ignore = ["E501"]

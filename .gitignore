@@ -1,0 +1,55 @@
+# Python environments and generated files
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.matplotlib-cache/
+
+# Builds and coverage
+build/
+dist/
+wheels/
+.coverage
+htmlcov/
+
+# Editors and operating systems
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Private data and local manuscript workspace
+data/
+target/
+ideal/
+blind_masks/
+new_target/
+paper/
+*.tif
+*.tiff
+
+# Generated experiments and predictions
+artifacts/
+experiments/
+publication/
+predictions/
+outputs/
+tmp/
+*.npy
+*.npz
+*.log
+*.zip
+
+# Model binaries are distributed separately. The four stable release names may
+# be explicitly added if the release strategy later uses Git storage.
+*.pt
+*.pth
+*.ckpt
+!weights/fibnet_source_v0.1.pt
+!weights/fibnet_target_seed142_v0.1.pt
+!weights/fibnet_target_seed242_v0.1.pt
+!weights/fibnet_target_seed342_v0.1.pt

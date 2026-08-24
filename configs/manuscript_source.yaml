@@ -1,0 +1,27 @@
+version: 1
+purpose: manuscript source-domain training
+model:
+  architecture: resunet
+  feature_mode: stack_relief
+training:
+  seed: 44
+  epochs: 24
+  train_mode: patch
+  patch_size: 384
+  patches_per_image: 24
+  positive_patch_ratio: 0.75
+  minimum_positive_fraction: 0.005
+  batch_size: 2
+  optimizer: Adam
+  learning_rate: 0.0001
+  weight_decay: 0.00001
+  augmentation: affine_noise
+loss:
+  bce_weight: 0.30
+  dice_weight: 0.40
+  tversky_weight: 0.30
+  tversky_alpha: 0.35
+  tversky_beta: 0.65
+mask:
+  pore_convention: pixel value equal to 0
+  threshold: 0
