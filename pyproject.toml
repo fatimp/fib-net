@@ -9,7 +9,15 @@ description = "Annotation-efficient pore segmentation for serial soil FIB-SEM im
 readme = "README.md"
 requires-python = ">=3.10"
 license = "MIT"
-authors = [{ name = "K. Tolstygin" }]
+authors = [
+    { name = "Kirill D. Tolstygin", email = "kirill.tolstygin@yandex.ru" },
+    { name = "Konstantin A. Romanenko" },
+    { name = "Daniil E. Mitichkin" },
+    { name = "Evgeny V. Korostylev" },
+    { name = "Andrey V. Parochkin" },
+    { name = "Maria A. Chepurnova" },
+    { name = "Kirill M. Gerke" },
+]
 keywords = ["FIB-SEM", "segmentation", "soil", "porosity", "PyTorch"]
 classifiers = [
     "Development Status :: 3 - Alpha",

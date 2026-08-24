@@ -5,6 +5,29 @@ type: software
 version: 0.1.0
 authors:
   - family-names: Tolstygin
-    given-names: K.
+    given-names: Kirill D.
+    affiliation: "Dokuchaev Soil Science Institute, Moscow, 119017, Russia; Soil Science Faculty, Lomonosov Moscow State University, Moscow, 119234, Russia"
+  - family-names: Romanenko
+    given-names: Konstantin A.
+    affiliation: "Dokuchaev Soil Science Institute, Moscow, 119017, Russia"
+  - family-names: Mitichkin
+    given-names: Daniil E.
+    affiliation: "Dokuchaev Soil Science Institute, Moscow, 119017, Russia"
+  - family-names: Korostylev
+    given-names: Evgeny V.
+    affiliation: "Moscow Institute of Physics and Technology, Dolgoprudny, 141701, Moscow Region, Russia"
+  - family-names: Parochkin
+    given-names: Andrey V.
+    affiliation: "Moscow Institute of Physics and Technology, Dolgoprudny, 141701, Moscow Region, Russia"
+  - family-names: Chepurnova
+    given-names: Maria A.
+    affiliation: "Soil Science Faculty, Lomonosov Moscow State University, Moscow, 119234, Russia"
+  - family-names: Gerke
+    given-names: Kirill M.
+    affiliation: "Center for Computational Physics, Landau School of Physics and Research, Moscow Institute of Physics and Technology, Dolgoprudny, 141701, Moscow Region, Russia; Schmidt Institute of Physics of the Earth of Russian Academy of Sciences, Moscow, 107031, Russia"
+contact:
+  - family-names: Tolstygin
+    given-names: Kirill D.
+    email: kirill.tolstygin@yandex.ru
 repository-code: "https://github.com/IsNeron/fib-net"
 license: MIT
