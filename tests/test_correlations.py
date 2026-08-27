@@ -10,6 +10,10 @@ import pytest
 
 from fibnet import correlations
 
+AUTHORITATIVE_CF_FIXTURE = (
+    Path(__file__).parent / "fixtures" / "authoritative_cf_triplets.csv"
+)
+
 
 def julia_executable() -> str:
     executable = os.environ.get("JULIA_EXE") or shutil.which("julia")
@@ -135,74 +139,51 @@ def test_native_2d_julia_interface_and_nonperiodic_boundary() -> None:
 
 
 @pytest.mark.parametrize(
-    ("path", "group", "expected"),
+    ("experiment", "group", "expected"),
     [
         (
-            "results/scenario1_summary.csv",
+            "source_holdout",
             "soil1",
             (0.15014060557741268, 0.6990865163979532, 0.42461356098768305),
         ),
         (
-            "results/scenario1_summary.csv",
+            "source_holdout",
             "soil9",
             (0.09597282141545356, 0.2937133207645575, 0.1948430710900055),
         ),
         (
-            "results/blind_summary.csv",
+            "historical_target",
             "scratch",
             (0.0741981475823761, 0.1919681640376743, 0.13308315581002517),
         ),
         (
-            "results/blind_summary.csv",
+            "historical_target",
             "pretrained",
             (0.07893345957800411, 0.2468392095659957, 0.1628863345719999),
         ),
         (
-            "fibnet_optimized_final/results/historical_blind_summary.csv",
+            "historical_target",
             "optimized",
             (0.08189843724127246, 0.21284706824730004, 0.14737275274428624),
         ),
         (
-            "sam2_benchmark/results/sam2_blind_summary.csv",
+            "historical_target",
             "sam2.1",
             (0.0908932131657775, 0.33445929302423894, 0.21267625309500823),
         ),
+        (
+            "target_loo",
+            "optimized",
+            (0.06935461082821912, 0.19797769630801615, 0.13366615356811765),
+        ),
     ],
 )
-def test_authoritative_manuscript_cf_triplets(path, group, expected) -> None:
-    manuscript = Path(__file__).parents[1] / "experiments" / "manuscript_final"
-    rows = list(csv.DictReader((manuscript / path).open(encoding="utf-8", newline="")))
-    if "metric" in rows[0]:
-        group_column = "sequence" if "sequence" in rows[0] else "model"
-        actual = tuple(
-            float(
-                next(
-                    row
-                    for row in rows
-                    if row[group_column] == group and row["metric"] == metric
-                )["mean"]
-            )
-            for metric in ("fss_nrmse", "fsv_nrmse", "e_cf")
-        )
-    else:
-        row = next(row for row in rows if row["model"] == group)
-        actual = tuple(
-            float(row[f"{metric}_mean"])
-            for metric in ("fss_nrmse", "fsv_nrmse", "e_cf")
-        )
+def test_authoritative_manuscript_cf_triplets(experiment, group, expected) -> None:
+    with AUTHORITATIVE_CF_FIXTURE.open(encoding="utf-8", newline="") as handle:
+        rows = list(csv.DictReader(handle))
+    row = next(
+        row for row in rows if row["experiment"] == experiment and row["group"] == group
+    )
+    actual = tuple(float(row[metric]) for metric in ("fss_nrmse", "fsv_nrmse", "e_cf"))
     assert actual == pytest.approx(expected, abs=1e-15)
-
-
-def test_authoritative_loo_triplet() -> None:
-    path = (
-        Path(__file__).parents[1]
-        / "experiments/manuscript_final/fibnet_optimization/ablation_pass2/results/pareto_candidates.csv"
-    )
-    rows = list(csv.DictReader(path.open(encoding="utf-8", newline="")))
-    row = next(row for row in rows if row["candidate_id"] == "G_t0.60")
-    assert tuple(
-        float(row[key]) for key in ("fss_nrmse", "fsv_nrmse", "e_cf")
-    ) == pytest.approx(
-        (0.06935461082821912, 0.19797769630801615, 0.13366615356811765),
-        abs=1e-15,
-    )
+    assert actual[2] == pytest.approx((actual[0] + actual[1]) / 2, abs=1e-15)
