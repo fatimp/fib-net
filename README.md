@@ -29,7 +29,7 @@ not a claim that five masks are universally sufficient.
 FIB-NET requires Python 3.10 or newer. With [uv](https://docs.astral.sh/uv/):
 
 ```bash
-git clone https://github.com/IsNeron/fib-net.git
+git clone https://github.com/fatimp/fib-net.git
 cd fib-net
 uv sync --group dev
 ```
@@ -205,9 +205,39 @@ uv run fibnet-evaluate \
   --output-json outputs/metrics.json
 ```
 
-Surface correlations can be computed with `fibnet-correlations`; additional
-stack and curve-comparison utilities are available under `scripts/`. Quantitative
-thresholding always uses float32 `.npy` maps, never 8-bit preview images.
+Surface correlations are computed with
+[`CorrelationFunctions.jl`](https://github.com/fatimp/CorrelationFunctions.jl),
+version 0.14.0, using its native 2D `Directional.surf2` and
+`Directional.surfvoid` implementations. Install Julia 1.10 or newer and
+instantiate the pinned bundled Julia environment once:
+
+```bash
+julia --project=fibnet/julia -e 'using Pkg; Pkg.instantiate()'
+```
+
+The manuscript calculation compares manual and predicted masks slice by slice:
+
+```bash
+uv run fibnet-correlations \
+  --mask-dir outputs/ensemble \
+  --pore-value nonzero \
+  --manual-dir ideal \
+  --manual-pore-value zero \
+  --pixel-size 0.111 \
+  --output-prefix outputs/correlations \
+  --max-distance 64 \
+  --step 2 \
+  --mode slices2d
+```
+
+This path preserves every image as a native 2D array: pore/void is 0, solid is 1,
+the solid phase is selected, `ConvKernel(7)` creates the convolution-based
+interfacial field, and boundaries are non-periodic. It evaluates x/y directions
+at 0--64 px in 2 px steps, combines them by valid-pair counts, and reports RMSE,
+NRMSE (RMSE divided by the manual-curve range), and `E_CF`. The separate
+`--mode volume3d` option remains available for genuine volumes; it is not the
+manuscript calculation. Quantitative thresholding always uses float32 `.npy`
+maps, never 8-bit preview images.
 
 ## Reproducing the Manuscript Workflow
 
@@ -244,6 +274,9 @@ uv run pytest
 ## Citation
 
 Please cite the software using [CITATION.cff](CITATION.cff).
+
+Release-specific changes are documented in
+[the v0.2.0 notes](docs/releases/v0.2.0.md).
 
 ## License
 

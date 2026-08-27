@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "fib-net"
-version = "0.1.0"
+version = "0.2.0"
 description = "Annotation-efficient pore segmentation for serial soil FIB-SEM images"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -38,8 +38,8 @@ dependencies = [
 ]
 
 [project.urls]
-Repository = "https://github.com/IsNeron/fib-net"
-Issues = "https://github.com/IsNeron/fib-net/issues"
+Repository = "https://github.com/fatimp/fib-net"
+Issues = "https://github.com/fatimp/fib-net/issues"
 
 [project.scripts]
 fibnet-train = "fibnet.training:main"
