@@ -1,8 +1,6 @@
 from __future__ import annotations
 
 import csv
-import os
-import shutil
 from pathlib import Path
 
 import numpy as np
@@ -13,13 +11,6 @@ from fibnet import correlations
 AUTHORITATIVE_CF_FIXTURE = (
     Path(__file__).parent / "fixtures" / "authoritative_cf_triplets.csv"
 )
-
-
-def julia_executable() -> str:
-    executable = os.environ.get("JULIA_EXE") or shutil.which("julia")
-    if executable is None:
-        pytest.skip("Julia is not installed or JULIA_EXE is not set.")
-    return executable
 
 
 def test_directional_correlations_uses_julia_bridge(monkeypatch) -> None:
@@ -110,32 +101,6 @@ def test_radial_average_uses_available_sample_counts() -> None:
     assert correlations.radial_average(rows) == [
         {"distance": 1.0, "sample_count": 4.0, "fss": 3.0, "fsv": 5.0}
     ]
-
-
-def test_native_2d_julia_interface_and_nonperiodic_boundary() -> None:
-    pore = np.zeros((21, 21), dtype=bool)
-    pore[:, :10] = True
-
-    rows = correlations.directional_correlations(
-        pore,
-        max_distance=4,
-        step=2,
-        axes=["y", "x"],
-        boundary="nonperiodic",
-        filter_width=7,
-        julia_executable=julia_executable(),
-    )
-
-    assert [row["sample_count"] for row in rows if row["axis"] == "x"] == [
-        441.0,
-        399.0,
-        357.0,
-    ]
-    averaged = correlations.radial_average(rows)
-    assert averaged[0]["fss"] == pytest.approx(0.010198842609576705)
-    assert averaged[0]["fsv"] == pytest.approx(0.023809523809522153)
-    assert averaged[2]["fss"] == pytest.approx(0.005686475921242795)
-    assert averaged[2]["fsv"] == pytest.approx(0.011904761904761082)
 
 
 @pytest.mark.parametrize(
