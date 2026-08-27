@@ -49,7 +49,7 @@ tmp/
 *.pt
 *.pth
 *.ckpt
-!weights/fibnet_source_v0.1.pt
-!weights/fibnet_target_seed142_v0.1.pt
-!weights/fibnet_target_seed242_v0.1.pt
-!weights/fibnet_target_seed342_v0.1.pt
+weights/fibnet_source_v0.1.pt
+weights/fibnet_target_seed142_v0.1.pt
+weights/fibnet_target_seed242_v0.1.pt
+weights/fibnet_target_seed342_v0.1.pt

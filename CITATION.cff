@@ -2,7 +2,8 @@ cff-version: 1.2.0
 message: "If you use FIB-NET, please cite this software."
 title: FIB-NET
 type: software
-version: 0.1.0
+version: 0.2.0
+date-released: 2026-08-27
 authors:
   - family-names: Tolstygin
     given-names: Kirill D.
@@ -24,10 +25,10 @@ authors:
     affiliation: "Soil Science Faculty, Lomonosov Moscow State University, Moscow, 119234, Russia"
   - family-names: Gerke
     given-names: Kirill M.
-    affiliation: "Center for Computational Physics, Landau School of Physics and Research, Moscow Institute of Physics and Technology, Dolgoprudny, 141701, Moscow Region, Russia; Schmidt Institute of Physics of the Earth of Russian Academy of Sciences, Moscow, 107031, Russia"
+    affiliation: "Center for Computational Physics, Landau School of Physics and Research, Moscow Institute of Physics and Technology, Dolgoprudny, 141701, Moscow Region, Russia"
 contact:
   - family-names: Tolstygin
     given-names: Kirill D.
     email: kirill.tolstygin@yandex.ru
-repository-code: "https://github.com/IsNeron/fib-net"
+repository-code: "https://github.com/fatimp/fib-net"
 license: MIT
