@@ -37,6 +37,12 @@ dependencies = [
     "tqdm>=4.67,<5",
 ]
 
+[project.optional-dependencies]
+interactive = [
+    "scikit-image>=0.25,<0.26",
+    "scikit-learn>=1.6,<2",
+]
+
 [project.urls]
 Repository = "https://github.com/fatimp/fib-net"
 Issues = "https://github.com/fatimp/fib-net/issues"
@@ -48,12 +54,15 @@ fibnet-postprocess = "fibnet.postprocessing:main"
 fibnet-evaluate = "fibnet.evaluation:main"
 fibnet-correlations = "fibnet.correlations:main"
 fibnet-ensemble = "fibnet.ensemble:main"
+fibnet-rf-segment = "fibnet.interactive.cli:main"
 
 [dependency-groups]
 dev = [
     "pytest>=8.3,<10",
     "pyyaml>=6.0,<7",
     "ruff>=0.15,<0.16",
+    "scikit-image>=0.25,<0.26",
+    "scikit-learn>=1.6,<2",
 ]
 
 [tool.hatch.build.targets.wheel]
