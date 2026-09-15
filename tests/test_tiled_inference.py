@@ -1,9 +1,11 @@
 import numpy as np
+from PIL import Image
 
 from fibnet.inference import (
     _axis_positions,
     _tile_weight,
     accumulate_weighted_tile,
+    iter_tiled_inputs,
     normalize_weighted_probability,
 )
 
@@ -77,3 +79,27 @@ def test_axis_positions_rejects_uncovered_gaps() -> None:
 
     assert positions[0] == 0
     assert positions[-1] == 68
+
+
+def test_tiled_inputs_reuse_production_stack_relief_preprocessing(tmp_path) -> None:
+    paths = []
+    for index, value in enumerate((40, 80, 120)):
+        path = tmp_path / f"{index}.tiff"
+        Image.fromarray(np.full((18, 22), value, dtype=np.uint8)).save(path)
+        paths.append(path)
+
+    tiles = list(
+        iter_tiled_inputs(
+            paths[1],
+            tile_size=16,
+            overlap=4,
+            feature_mode="stack_relief",
+            previous_path=paths[0],
+            next_path=paths[2],
+        )
+    )
+
+    assert len(tiles) == 4
+    assert {(tile.x, tile.y) for tile in tiles} == {(0, 0), (6, 0), (0, 2), (6, 2)}
+    assert all(tuple(tile.tensor.shape) == (1, 6, 16, 16) for tile in tiles)
+    assert {(tile.crop_width, tile.crop_height) for tile in tiles} == {(16, 16)}

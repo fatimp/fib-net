@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import argparse
 import re
+from collections.abc import Iterator
+from dataclasses import dataclass
 from pathlib import Path
 
 import numpy as np
@@ -17,6 +19,18 @@ from .model import build_model
 from .probability_io import save_probability_map
 
 IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".tif", ".tiff", ".bmp", ".gif"}
+
+
+@dataclass(frozen=True)
+class TiledInput:
+    """One production-preprocessed native-resolution inference tile."""
+
+    tensor: torch.Tensor
+    x: int
+    y: int
+    crop_width: int
+    crop_height: int
+    weight: np.ndarray
 
 
 def parse_args() -> argparse.Namespace:
@@ -206,6 +220,75 @@ def _tile_weight(tile_size: int) -> np.ndarray:
     return np.outer(weight_1d, weight_1d).astype(np.float32)
 
 
+def iter_tiled_inputs(
+    path: Path,
+    tile_size: int,
+    overlap: int,
+    feature_mode: str,
+    previous_path: Path | None = None,
+    next_path: Path | None = None,
+) -> Iterator[TiledInput]:
+    """Yield tiles using the exact preprocessing and geometry of ``predict_tiled``."""
+    if tile_size <= 0:
+        raise ValueError("tile_size must be positive.")
+    if overlap < 0 or overlap >= tile_size:
+        raise ValueError("overlap must be in the range [0, tile_size).")
+
+    image = Image.open(path).convert("L")
+    previous_image = (
+        Image.open(previous_path or path).convert("L")
+        if feature_mode == "stack_relief"
+        else None
+    )
+    next_image = (
+        Image.open(next_path or path).convert("L")
+        if feature_mode == "stack_relief"
+        else None
+    )
+    width, height = image.size
+    stride = tile_size - overlap
+    xs = _axis_positions(width, tile_size, stride)
+    ys = _axis_positions(height, tile_size, stride)
+    tile_weight = _tile_weight(tile_size)
+
+    for y in ys:
+        for x in xs:
+            crop_width = min(tile_size, width - x)
+            crop_height = min(tile_size, height - y)
+            tile = image.crop((x, y, x + crop_width, y + crop_height))
+            previous_tile = (
+                previous_image.crop((x, y, x + crop_width, y + crop_height))
+                if previous_image
+                else None
+            )
+            next_tile = (
+                next_image.crop((x, y, x + crop_width, y + crop_height))
+                if next_image
+                else None
+            )
+            if tile.size != (tile_size, tile_size):
+                padded = Image.new("L", (tile_size, tile_size), color=0)
+                padded.paste(tile, (0, 0))
+                tile = padded
+                if previous_tile is not None:
+                    padded_previous = Image.new("L", (tile_size, tile_size), color=0)
+                    padded_previous.paste(previous_tile, (0, 0))
+                    previous_tile = padded_previous
+                if next_tile is not None:
+                    padded_next = Image.new("L", (tile_size, tile_size), color=0)
+                    padded_next.paste(next_tile, (0, 0))
+                    next_tile = padded_next
+
+            yield TiledInput(
+                tensor=image_to_tensor(tile, feature_mode, previous_tile, next_tile),
+                x=x,
+                y=y,
+                crop_width=crop_width,
+                crop_height=crop_height,
+                weight=tile_weight[:crop_height, :crop_width],
+            )
+
+
 def accumulate_weighted_tile(
     probability_sum: np.ndarray,
     weight_sum: np.ndarray,
@@ -244,68 +327,30 @@ def predict_tiled(
     previous_path: Path | None = None,
     next_path: Path | None = None,
 ) -> np.ndarray:
-    if tile_size <= 0:
-        raise ValueError("tile_size must be positive.")
-    if overlap < 0 or overlap >= tile_size:
-        raise ValueError("overlap must be in the range [0, tile_size).")
-
-    image = Image.open(path).convert("L")
-    previous_image = (
-        Image.open(previous_path or path).convert("L")
-        if feature_mode == "stack_relief"
-        else None
-    )
-    next_image = (
-        Image.open(next_path or path).convert("L")
-        if feature_mode == "stack_relief"
-        else None
-    )
-    width, height = image.size
-    stride = tile_size - overlap
-    xs = _axis_positions(width, tile_size, stride)
-    ys = _axis_positions(height, tile_size, stride)
-
+    with Image.open(path) as image:
+        width, height = image.size
     probability_sum = np.zeros((height, width), dtype=np.float32)
     weight_sum = np.zeros((height, width), dtype=np.float32)
-    tile_weight = _tile_weight(tile_size)
 
-    for y in ys:
-        for x in xs:
-            crop_width = min(tile_size, width - x)
-            crop_height = min(tile_size, height - y)
-            tile = image.crop((x, y, x + crop_width, y + crop_height))
-            previous_tile = (
-                previous_image.crop((x, y, x + crop_width, y + crop_height))
-                if previous_image
-                else None
-            )
-            next_tile = (
-                next_image.crop((x, y, x + crop_width, y + crop_height))
-                if next_image
-                else None
-            )
-            if tile.size != (tile_size, tile_size):
-                padded = Image.new("L", (tile_size, tile_size), color=0)
-                padded.paste(tile, (0, 0))
-                tile = padded
-                if previous_tile is not None:
-                    padded_previous = Image.new("L", (tile_size, tile_size), color=0)
-                    padded_previous.paste(previous_tile, (0, 0))
-                    previous_tile = padded_previous
-                if next_tile is not None:
-                    padded_next = Image.new("L", (tile_size, tile_size), color=0)
-                    padded_next.paste(next_tile, (0, 0))
-                    next_tile = padded_next
-
-            tensor = image_to_tensor(tile, feature_mode, previous_tile, next_tile)
-            logits = model(tensor.to(device))
-            probability = torch.sigmoid(logits).squeeze().cpu().numpy()
-            probability = probability[:crop_height, :crop_width]
-            weight = tile_weight[:crop_height, :crop_width]
-
-            accumulate_weighted_tile(
-                probability_sum, weight_sum, probability, weight, y, x
-            )
+    for tile in iter_tiled_inputs(
+        path,
+        tile_size,
+        overlap,
+        feature_mode,
+        previous_path=previous_path,
+        next_path=next_path,
+    ):
+        logits = model(tile.tensor.to(device))
+        probability = torch.sigmoid(logits).squeeze().cpu().numpy()
+        probability = probability[: tile.crop_height, : tile.crop_width]
+        accumulate_weighted_tile(
+            probability_sum,
+            weight_sum,
+            probability,
+            tile.weight,
+            tile.y,
+            tile.x,
+        )
 
     return normalize_weighted_probability(probability_sum, weight_sum)
 
